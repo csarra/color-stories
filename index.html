@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hybrid 2D/3D Regional Map Viewer</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Load the Google Maps API. Using v=alpha to safely instantiate modern Map3DElement tokens alongside 2D modules. -->
+    <!-- REPLACE YOUR_API_KEY with your actual Google Cloud API Key -->
+    <script async src="https://googleapis.com"></script>
+</head>
+<body>
+
+    <div id="sidebar">
+        <h2>Regions</h2>
+        <div id="controls">
+            <!-- View Toggle Button -->
+            <button id="toggle-view-btn">Switch to 3D Globe View</button>
+        </div>
+        <div id="regions-list"></div>
+    </div>
+
+    <!-- Map Stage Container -->
+    <div id="map-stage">
+        <!-- 2D Viewport Target -->
+        <gmp-map id="map-2d" center="10.0000,15.0000" zoom="2" map-id="DEMO_MAP_ID"></gmp-map>
+        <!-- 3D Viewport Target (hidden initially via CSS) -->
+        <gmp-map-3d id="map-3d" center="10.0000,15.0000,12000000" heading="0" tilt="0" class="hidden"></gmp-map-3d>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
