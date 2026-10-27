@@ -1,4 +1,6 @@
-// Centralized Data Model Configuration
+// =========================================================================
+// 1. DATA MODEL DECLARATION
+// =========================================================================
 const regionDataset = [
     {
         id: "egypt",
@@ -50,31 +52,33 @@ const regionDataset = [
     }
 ];
 
-// Application state tracker
+// Global State Trackers
 let is3DMode = false;
 let active2DOverlays = [];
 
+// =========================================================================
+// 2. CORE MAP RENDERING PIPELINE (Keep function intact)
+// =========================================================================
 async function initApp() {
-    // Instantiate UI handles
     const toggleButton = document.getElementById("toggle-view-btn");
     const map2DElement = document.getElementById("map-2d");
     const map3DElement = document.getElementById("map-3d");
 
-    // Extract runtime element handles
+    // Extract runtime 2D element map instance
     const map2DInstance = map2DElement.innerMap;
     
-    // Import functional overlay asset classes from dynamic script context
+    // Explicitly import your drawing tool primitives from the Google dynamic scope
     const { Polygon } = await google.maps.importLibrary("maps");
     const { Polygon3DElement } = await google.maps.importLibrary("maps3d");
 
-    // 1. Render data layers to both models simultaneously
+    // Render geographic features to both layer architectures
     render2DRegions(map2DInstance, Polygon);
     render3DRegions(map3DElement, Polygon3DElement);
 
-    // 2. Build Sidebar Navigation Interface Elements
-    buildSidebar();
+    // Populate Sidebar UI Navigation elements
+    buildSidebar(map2DInstance, map3DElement);
 
-    // 3. Coordinate Switchable View State Mechanics
+    // Orchestrate 2D Vector vs 3D Globe presentation modes
     toggleButton.addEventListener("click", () => {
         is3DMode = !is3DMode;
         if (is3DMode) {
@@ -89,39 +93,46 @@ async function initApp() {
             toggleButton.style.backgroundColor = "#1a73e8";
         }
     });
-
-    function buildSidebar() {
-        const listContainer = document.getElementById("regions-list");
-        regionDataset.forEach(region => {
-            const card = document.createElement("div");
-            card.className = "region-card";
-            card.innerHTML = `
-                <div>
-                    <span class="color-badge" style="background-color: ${region.colorHex}"></span>
-                    <span class="region-name">${region.name}</span>
-                </div>
-                <div class="region-desc">${region.description}</div>
-            `;
-
-            // Fly or Pan depending on active mode state
-            card.addEventListener("click", () => {
-                if (is3DMode) {
-                    map3DElement.flyTo({
-                        center: { lat: region.center.lat, lng: region.center.lng, altitude: region.altitude3D },
-                        tilt: 20,
-                        durationMillis: 2500
-                    });
-                } else {
-                    map2DInstance.setCenter(region.center);
-                    map2DInstance.setZoom(region.zoom2D);
-                }
-            });
-            listContainer.appendChild(card);
-        });
-    }
 }
 
-// Render routine for standard 2D vector layouts
+// =========================================================================
+// 3. UI GENERATION & SUBSYSTEM HELPERS
+// =========================================================================
+function buildSidebar(map2DInstance, map3DElement) {
+    const listContainer = document.getElementById("regions-list");
+    
+    // Clear out container to prevent duplicate lists on hot-reloads
+    listContainer.innerHTML = "";
+
+    regionDataset.forEach(region => {
+        const card = document.createElement("div");
+        card.className = "region-card";
+        card.innerHTML = `
+            <div>
+                <span class="color-badge" style="background-color: ${region.colorHex}"></span>
+                <span class="region-name">${region.name}</span>
+            </div>
+            <div class="region-desc">${region.description}</div>
+        `;
+
+        card.addEventListener("click", () => {
+            if (is3DMode) {
+                // Animate 3D Camera system
+                map3DElement.flyTo({
+                    center: { lat: region.center.lat, lng: region.center.lng, altitude: region.altitude3D },
+                    tilt: 20,
+                    durationMillis: 2500
+                });
+            } else {
+                // Pan flat 2D viewport
+                map2DInstance.setCenter(region.center);
+                map2DInstance.setZoom(region.zoom2D);
+            }
+        });
+        listContainer.appendChild(card);
+    });
+}
+
 function render2DRegions(mapInstance, PolygonClass) {
     regionDataset.forEach(region => {
         const poly2D = new PolygonClass({
@@ -137,7 +148,6 @@ function render2DRegions(mapInstance, PolygonClass) {
     });
 }
 
-// Render routine for advanced 3D spatial models
 function render3DRegions(globeElement, Polygon3DClass) {
     regionDataset.forEach(region => {
         const poly3D = new Polygon3DClass({
@@ -145,16 +155,21 @@ function render3DRegions(globeElement, Polygon3DClass) {
             strokeColor: region.colorHex,
             strokeWidth: 3,
             fillColor: convertHexToRgba(region.colorHex, 0.4),
-            extruded: true // Extrude shape vertically across high-altitude topography elevations!
+            extruded: true // Extrude bounds into a geometric 3D volume block
         });
         globeElement.appendChild(poly3D);
     });
 }
 
-// Helper tool to support color declarations required across disparate renderer pipelines
 function convertHexToRgba(hex, alpha) {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
     const b = parseInt(hex.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
+
+// =========================================================================
+// 4. THE LIFECYCLE WRAPPER
+// =========================================================================
+// Safely defer map assignment until Vercel completes structural DOM compilation
+window.addEventListener('DOMContentLoaded', initApp);
